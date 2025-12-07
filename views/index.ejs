@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    body { background-color: #f8f9fa; }
+    .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+    .card { box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform 0.2s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .product-image { width: 100%; height: 200px; object-fit: cover; background: #f0f0f0; }
+    .product-image-placeholder { 
+      width: 100%; height: 200px; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 3rem;
+    }
+    .page-container { min-height: calc(100vh - 56px - 60px); }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="javascript:void(0)" onclick="showProducts()">
+        <i class="bi bi-shop"></i> Product Management
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="javascript:void(0)" onclick="showProducts()">
+              <i class="bi bi-box-seam"></i> Products
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="javascript:void(0)" onclick="showCategories()">
+              <i class="bi bi-tags"></i> Categories
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <div id="productsPage" class="container mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-box-seam"></i> Products</h2>
+        <button class="btn btn-primary" onclick="showProductCreate()">
+          <i class="bi bi-plus-circle"></i> Add Product
+        </button>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search products..." id="searchInput" onkeyup="searchProducts()">
+            <button class="btn btn-primary" onclick="searchProducts()">
+              <i class="bi bi-search"></i> Search
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row row-cols-1 row-cols-md-3 g-4" id="productsList">
+        <div class="col-12 text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+      </nav>
+    </div>
+
+    <div id="productCreatePage" class="container mt-4" style="display:none;">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+              <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Create New Product</h4>
+            </div>
+            <div class="card-body">
+              <form id="productForm" onsubmit="createProduct(event)">
+                <div class="mb-3">
+                  <label class="form-label">Product Name *</label>
+                  <input type="text" class="form-control" id="productName" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Description</label>
+                  <textarea class="form-control" id="productDesc" rows="3"></textarea>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Price *</label>
+                    <div class="input-group">
+                      <span class="input-group-text">Rp</span>
+                      <input type="number" class="form-control" id="productPrice" required>
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Stock *</label>
+                    <input type="number" class="form-control" id="productStock" required>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Category *</label>
+                  <select class="form-select" id="productCategory" required>
+                    <option value="">Select Category</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Product Image</label>
+                  <input type="file" class="form-control" id="productImage" accept="image/*" onchange="previewImage(event)">
+                  <small class="text-muted">Max 5MB (jpg, jpeg, png, gif)</small>
+                  <div id="imagePreview" class="mt-2"></div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Create Product
+                  </button>
+                  <button type="button" class="btn btn-secondary" onclick="showProducts()">
+                    <i class="bi bi-x-circle"></i> Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="categoriesPage" class="container mt-4" style="display:none;">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-tags"></i> Categories</h2>
+        <button class="btn btn-primary" onclick="showCategoryCreate()">
+          <i class="bi bi-plus-circle"></i> Add Category
+        </button>
+      </div>
+      <div class="card shadow">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-primary">
+                <tr><th>ID</th><th>Name</th><th>Description</th><th>Products</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="categoriesList"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="categoryCreatePage" class="container mt-4" style="display:none;">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+              <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Create New Category</h4>
+            </div>
+            <div class="card-body">
+              <form id="categoryForm" onsubmit="createCategory(event)">
+                <div class="mb-3">
+                  <label class="form-label">Category Name *</label>
+                  <input type="text" class="form-control" id="categoryName" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Description</label>
+                  <textarea class="form-control" id="categoryDesc" rows="3"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Create Category
+                  </button>
+                  <button type="button" class="btn btn-secondary" onclick="showCategories()">
+                    <i class="bi bi-x-circle"></i> Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-light text-center py-3 mt-5">
+    <div class="container">
+      <p class="mb-0 text-muted">© 2025 Product Management System</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let allProducts = [];
+    let filteredProducts = [];
+    let categories = [];
+    let currentPage = 1;
+    const itemsPerPage = 9;
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(amount);
+    }
+
+    function showProducts() {
+      hideAllPages();
+      document.getElementById('productsPage').style.display = 'block';
+      currentPage = 1;
+      loadProducts();
+    }
+
+    function showProductCreate() {
+      hideAllPages();
+      document.getElementById('productCreatePage').style.display = 'block';
+      loadCategoryOptions();
+    }
+
+    function showCategories() {
+      hideAllPages();
+      document.getElementById('categoriesPage').style.display = 'block';
+      loadCategories();
+    }
+
+    function showCategoryCreate() {
+      hideAllPages();
+      document.getElementById('categoryCreatePage').style.display = 'block';
+    }
+
+    function hideAllPages() {
+      document.getElementById('productsPage').style.display = 'none';
+      document.getElementById('productCreatePage').style.display = 'none';
+      document.getElementById('categoriesPage').style.display = 'none';
+      document.getElementById('categoryCreatePage').style.display = 'none';
+    }
+
+    async function loadProducts() {
+      try {
+        const response = await fetch('/api/products');
+        if (!response.ok) throw new Error('Failed to load products');
+        
+        allProducts = await response.json();
+        filteredProducts = allProducts;
+        renderProducts();
+        renderPagination();
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('productsList').innerHTML = `
+          <div class="col-12">
+            <div class="alert alert-danger">Error loading products: ${error.message}</div>
+          </div>
+        `;
+      }
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('productsList');
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const productsToShow = filteredProducts.slice(start, end);
+
+      if (productsToShow.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center py-5"><h4 class="text-muted">No products found</h4></div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      productsToShow.forEach(product => {
+        const stockBadge = product.stock > 10 
+          ? `<span class="badge bg-success">Stock: ${product.stock}</span>`
+          : product.stock > 0 
+          ? `<span class="badge bg-warning text-dark">Stock: ${product.stock}</span>`
+          : `<span class="badge bg-danger">Out of Stock</span>`;
+
+        const imageUrl = product.image 
+          ? `/uploads/${product.image}`
+          : `https://via.placeholder.com/400x200/667eea/ffffff?text=${encodeURIComponent(product.name.substring(0, 15))}`;
+
+        const card = `
+          <div class="col">
+            <div class="card h-100">
+              <img src="${imageUrl}" class="product-image" alt="${product.name}" 
+                   onerror="this.src='https://via.placeholder.com/400x200/667eea/ffffff?text=No+Image'">
+              <div class="card-body">
+                <h5 class="card-title">${product.name}</h5>
+                <p class="card-text text-muted small">${product.description || ''}</p>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-info">${product.category?.name || 'Uncategorized'}</span>
+                  ${stockBadge}
+                </div>
+                <h4 class="text-primary">${formatCurrency(product.price)}</h4>
+              </div>
+              <div class="card-footer bg-transparent">
+                <button class="btn btn-sm btn-outline-danger w-100" onclick="deleteProduct(${product.id})">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', card);
+      });
+    }
+
+    function renderPagination() {
+      const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+
+      if (totalPages <= 1) return;
+
+      for (let i = 1; i <= totalPages; i++) {
+        pagination.innerHTML += `
+          <li class="page-item ${i === currentPage ? 'active' : ''}">
+            <a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">${i}</a>
+          </li>
+        `;
+      }
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      renderProducts();
+      renderPagination();
+      window.scrollTo(0, 0);
+    }
+
+    function searchProducts() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      filteredProducts = allProducts.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        (p.description && p.description.toLowerCase().includes(query))
+      );
+      currentPage = 1;
+      renderProducts();
+      renderPagination();
+    }
+
+    function previewImage(event) {
+      const preview = document.getElementById('imagePreview');
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          preview.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded mt-2" style="max-height: 200px;">`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.innerHTML = '';
+      }
+    }
+
+    async function createProduct(event) {
+      event.preventDefault();
+      const formData = new FormData();
+      formData.append('name', document.getElementById('productName').value);
+      formData.append('description', document.getElementById('productDesc').value);
+      formData.append('price', document.getElementById('productPrice').value);
+      formData.append('stock', document.getElementById('productStock').value);
+      formData.append('categoryId', document.getElementById('productCategory').value);
+      
+      const imageFile = document.getElementById('productImage').files[0];
+      if (imageFile) formData.append('image', imageFile);
+
+      try {
+        const response = await fetch('/products', { method: 'POST', body: formData });
+        if (response.ok) {
+          alert('Product created successfully!');
+          document.getElementById('productForm').reset();
+          document.getElementById('imagePreview').innerHTML = '';
+          showProducts();
+        } else {
+          alert('Error creating product');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm('Delete this product?')) return;
+      try {
+        const response = await fetch(`/products/${id}?_method=DELETE`, { method: 'POST' });
+        if (response.ok) {
+          alert('Product deleted!');
+          loadProducts();
+        }
+      } catch (error) {
+        alert('Error deleting product');
+      }
+    }
+
+    async function loadCategories() {
+      try {
+        const response = await fetch('/api/categories');
+        categories = await response.json();
+        const tbody = document.getElementById('categoriesList');
+        tbody.innerHTML = '';
+
+        categories.forEach(cat => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${cat.id}</td>
+              <td><strong>${cat.name}</strong></td>
+              <td>${cat.description || '-'}</td>
+              <td><span class="badge bg-info">${cat._count?.products || 0} items</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${cat.id})">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    }
+
+    async function loadCategoryOptions() {
+      try {
+        const response = await fetch('/api/categories');
+        categories = await response.json();
+        const select = document.getElementById('productCategory');
+        select.innerHTML = '<option value="">Select Category</option>';
+        categories.forEach(cat => {
+          select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+        });
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    }
+
+    async function createCategory(event) {
+      event.preventDefault();
+      const data = new URLSearchParams({
+        name: document.getElementById('categoryName').value,
+        description: document.getElementById('categoryDesc').value
+      });
+
+      try {
+        const response = await fetch('/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: data
+        });
+        if (response.ok) {
+          alert('Category created!');
+          document.getElementById('categoryForm').reset();
+          showCategories();
+        }
+      } catch (error) {
+        alert('Error creating category');
+      }
+    }
+
+    async function deleteCategory(id) {
+      if (!confirm('Delete this category?')) return;
+      try {
+        const response = await fetch(`/categories/${id}?_method=DELETE`, { method: 'POST' });
+        if (response.ok) {
+          alert('Category deleted!');
+          loadCategories();
+        }
+      } catch (error) {
+        alert('Error deleting category');
+      }
+    }
+
+    // Initialize
+    loadProducts();
+  </script>
+</body>
+</html>
